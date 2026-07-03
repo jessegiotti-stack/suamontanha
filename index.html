@@ -723,7 +723,7 @@ function pick(btn, w) {
   const box = $("opts");
   box.classList.add("locked");
   btn.classList.add("picked");
-  curadoria.comment(state.i, w);
+  curadoria.comment(state.i);
   state.score[w]++;
   state.picks.push(w);
   state.leader = computeLeader();
@@ -749,7 +749,7 @@ function showResult() {
   curadoria.verdict(state.leader);
 }
 function restart() {
-  curadoria.stop();
+  curadoria.quiet();
   state.i = 0; state.score = { v: 0, c: 0, z: 0, r: 0, s: 0 }; state.picks = []; state.leader = "z";
   document.querySelectorAll(".mountain").forEach((m) => { m.classList.remove("active"); resetLayers(m.id); });
   renderQuestion();
@@ -838,39 +838,63 @@ document.addEventListener("visibilitychange", () => {
   else if (!$("s-intro").classList.contains("active")) neve.start();
 });
 
-/* ---------- curadoria comentada (voz da Fabi, opt-in) ---------- */
+/* ---------- curadoria comentada: música francesa ao fundo + Fabi ambiente ---------- */
 const curadoria = (() => {
   const vibe = $("vibe");
-  const player = new Audio();
-  player.volume = 0.95;
-  player.preload = "auto";
-  let on = false;
+  const VOL_MUSICA = 0.12, VOL_DUCK = 0.04;
+  const musica = new Audio("audio/musica.mp3");
+  musica.loop = true;
+  musica.preload = "none";
+  const voz = new Audio();
+  voz.volume = 0.95;
+  voz.preload = "none";
+  let on = false, ambPool = ["alpes1", "alpes2", "alpes3"], ambNext = 0;
   vibe.classList.add("ready");
-  player.addEventListener("play", () => vibe.classList.add("playing"));
-  player.addEventListener("ended", () => vibe.classList.remove("playing"));
-  player.addEventListener("pause", () => vibe.classList.remove("playing"));
-  function stop() {
-    player.pause();
+  function duck(down) {
+    musica.volume = down ? VOL_DUCK : VOL_MUSICA;
+  }
+  voz.addEventListener("play", () => { vibe.classList.add("playing"); duck(true); });
+  voz.addEventListener("ended", () => { vibe.classList.remove("playing"); duck(false); });
+  voz.addEventListener("pause", () => { vibe.classList.remove("playing"); duck(false); });
+  function fala(id) {
+    if (!on) return;
+    voz.pause();
+    voz.src = `audio/${id}.mp3`;
+    voz.currentTime = 0;
+    voz.play().catch(() => vibe.classList.remove("playing"));
+  }
+  function stopAll() {
+    voz.pause();
+    musica.pause();
     vibe.classList.remove("playing");
   }
   vibe.addEventListener("click", () => {
     on = !on;
     vibe.classList.toggle("on", on);
     vibe.setAttribute("aria-pressed", String(on));
-    if (!on) stop();
+    if (on) {
+      musica.volume = VOL_MUSICA;
+      musica.play().catch(() => {});
+      if ($("s-intro").classList.contains("active")) fala("ola");
+    } else {
+      stopAll();
+    }
   });
-  function play(id) {
-    if (!on) return;
-    player.pause();
-    player.src = `audio/${id}.mp3`;
-    player.currentTime = 0;
-    player.play().catch(() => vibe.classList.remove("playing"));
-  }
-  document.addEventListener("visibilitychange", () => { if (document.hidden) stop(); });
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) { voz.pause(); musica.pause(); }
+    else if (on) musica.play().catch(() => {});
+  });
   return {
-    comment(qIndex, w) { play(`q${qIndex + 1}${w}`); },
-    verdict(leader) { setTimeout(() => play(`r${leader}`), 700); },
-    stop,
+    // momentos fixos, conteúdo genérico: nada depende da resposta dada
+    comment(qIndex) {
+      if (qIndex === 1 || qIndex === 3) {
+        fala(ambPool[ambNext % ambPool.length]);
+        ambNext++;
+      }
+    },
+    verdict(leader) { setTimeout(() => fala(`fim-${leader}`), 900); },
+    quiet() { voz.pause(); },
+    stop: stopAll,
   };
 })();
 
