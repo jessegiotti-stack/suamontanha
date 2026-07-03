@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Qual é a sua montanha? · Menton Travel Boutique</title>
+<meta name="description" content="Cinco perguntas. A cada resposta, uma montanha se desenha. Val d'Isère, Courchevel ou Zermatt: descubra a sua e fale com a Fabi.">
+<meta property="og:title" content="Qual é a sua montanha?">
+<meta property="og:description" content="Cinco perguntas. A cada resposta, uma montanha se desenha.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://suamontanha.mentontravel.boutique/">
+<meta property="og:image" content="https://jessegiotti-stack.github.io/suamontanha/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:type" content="image/png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://jessegiotti-stack.github.io/suamontanha/og.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#ECE7DC; --ink:#1C1916; --stone:#7A7268; --mist:#B0A899;
+  --amber:#B5924C; --sand:#DDD7CB;
+  --serif:'Cormorant Garamond',serif; --sans:'Inter',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  background:var(--bg); color:var(--ink); font-family:var(--sans);
+  font-weight:300; min-height:100dvh; overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+}
+.app{
+  min-height:100dvh; display:flex; flex-direction:column;
+  max-width:1080px; margin:0 auto; padding:0 clamp(20px,4vw,48px);
+}
+
+/* ---------- masthead ---------- */
+.masthead{
+  display:grid; grid-template-columns:1fr auto 1fr; align-items:center;
+  padding:clamp(18px,3vh,28px) 0 0;
+}
+.masthead .brand{justify-self:start}
+.masthead #vibe{justify-self:center}
+.masthead .season{justify-self:end}
+@media (max-width:600px){
+  .masthead{grid-template-columns:1fr 1fr; row-gap:10px}
+  .masthead #vibe{grid-column:1 / -1; grid-row:2; justify-self:center}
+  .brand{font-size:9.5px; letter-spacing:.16em; white-space:nowrap}
+  .season{font-size:9.5px; letter-spacing:.14em}
+  .hint{letter-spacing:.14em}
+}
+.brand{
+  font-family:var(--sans); font-size:11px; letter-spacing:.22em;
+  text-transform:uppercase; color:var(--ink); font-weight:400;
+}
+.season{
+  font-size:10px; letter-spacing:.18em; text-transform:uppercase;
+  color:var(--stone);
+}
+
+/* ---------- vibe (trilha) ---------- */
+#vibe{
+  display:inline-flex; align-items:center; gap:.6em;
+  background:none; border:0; cursor:pointer; color:var(--stone);
+  font-family:var(--sans); font-size:.6rem; font-weight:400;
+  letter-spacing:.22em; text-transform:uppercase; padding:.4rem .6rem;
+  opacity:0; pointer-events:none; transition:opacity 1s ease, color .3s;
+}
+#vibe.ready{opacity:.6; pointer-events:auto}
+#vibe.ready:hover, #vibe.ready.on{opacity:1; color:var(--ink)}
+#vibe:focus-visible{outline:2px solid var(--amber); outline-offset:2px}
+#vibe svg{width:19px; height:19px; flex:none}
+.vb-dots{display:inline-flex; gap:3px; align-items:center}
+.vb-dots i{width:3px; height:3px; border-radius:50%; background:currentColor; animation:vbp 1.4s ease-in-out infinite}
+.vb-dots i:nth-child(2){animation-delay:.22s}
+.vb-dots i:nth-child(3){animation-delay:.44s}
+@keyframes vbp{0%,100%{opacity:.25} 50%{opacity:1}}
+.vb-eq{display:none; align-items:flex-end; gap:2px; height:11px}
+.vb-eq i{width:2px; height:100%; background:currentColor; transform-origin:bottom; animation:vbe 1s ease-in-out infinite}
+.vb-eq i:nth-child(2){animation-duration:.75s; animation-delay:.1s}
+.vb-eq i:nth-child(3){animation-duration:1.2s; animation-delay:.25s}
+@keyframes vbe{0%,100%{transform:scaleY(.25)} 50%{transform:scaleY(1)}}
+#vibe.playing .vb-dots{display:none}
+#vibe.playing .vb-eq{display:inline-flex}
+#vibe:not(.on) .vb-dots i{animation:none; opacity:.3}
+.hint{
+  font-size:10px; letter-spacing:.2em; text-transform:uppercase;
+  color:var(--mist); margin-top:2px;
+}
+
+/* ---------- neve ---------- */
+#neve{
+  position:fixed; inset:0; pointer-events:none; z-index:0;
+  opacity:0; transition:opacity 2.5s ease;
+}
+#neve.on{opacity:1}
+.app{position:relative; z-index:1}
+
+/* ---------- stage (a montanha) ---------- */
+.stage{
+  position:relative; width:100%;
+  height:clamp(240px,42vh,420px);
+  margin-top:clamp(8px,2vh,20px);
+}
+.stage svg{width:100%; height:100%; display:block}
+.mountain{opacity:0; transition:opacity .7s ease}
+.mountain.active{opacity:1}
+.mountain path, .mountain line, .mountain circle, .mountain rect{
+  fill:none; stroke:var(--ink); stroke-width:2;
+  stroke-linecap:round; stroke-linejoin:round;
+}
+.mountain .fine{stroke:var(--stone); stroke-width:1.2}
+.mountain .dotted{stroke:var(--mist); stroke-width:1.1; stroke-dasharray:2 6}
+.mountain text{
+  font-family:var(--sans); font-size:10.5px; letter-spacing:.14em;
+  text-transform:uppercase; fill:var(--stone); stroke:none;
+}
+.mountain text.cota{fill:var(--ink); letter-spacing:.08em}
+/* camadas: escondidas até o progresso liberar */
+.layer{visibility:hidden}
+.layer.on{visibility:visible}
+.layer.on .draw{animation:none}
+.layer text{opacity:0; transition:opacity .9s ease .5s}
+.layer.on text{opacity:1}
+
+/* ---------- painel ---------- */
+.panel{
+  flex:1; display:flex; flex-direction:column;
+  padding-bottom:clamp(24px,4vh,48px);
+}
+.screen{display:none; flex:1; flex-direction:column}
+.screen.active{display:flex; animation:rise .7s cubic-bezier(.22,1,.36,1) both}
+@keyframes rise{
+  from{opacity:0; transform:translateY(14px); filter:blur(3px)}
+  to{opacity:1; transform:none; filter:none}
+}
+
+/* intro */
+.intro{justify-content:center; text-align:center; gap:clamp(14px,2.5vh,22px)}
+.eyebrow{
+  font-size:10.5px; letter-spacing:.24em; text-transform:uppercase;
+  color:var(--stone);
+}
+h1{
+  font-family:var(--serif); font-weight:300; font-style:italic;
+  font-size:clamp(2.4rem,7vw,4.2rem); line-height:1.05;
+  text-wrap:pretty; letter-spacing:.01em;
+}
+.intro p{
+  font-size:clamp(.95rem,2.4vw,1.05rem); color:var(--stone);
+  max-width:34ch; margin:0 auto; line-height:1.55;
+}
+.btn{
+  font-family:var(--sans); font-size:11.5px; letter-spacing:.22em;
+  text-transform:uppercase; font-weight:400;
+  background:var(--ink); color:var(--bg);
+  border:1px solid var(--ink); border-radius:999px;
+  padding:16px 44px; cursor:pointer;
+  transition:background .3s, color .3s, transform .2s;
+  align-self:center; text-decoration:none; display:inline-block;
+}
+.btn:hover{background:transparent; color:var(--ink)}
+.btn:active{transform:scale(.97)}
+.btn:focus-visible{outline:2px solid var(--amber); outline-offset:3px}
+.btn.amber{background:var(--amber); border-color:var(--amber); color:#fff}
+.btn.amber:hover{background:transparent; color:var(--amber)}
+.btn.ghost{background:transparent; color:var(--stone); border-color:var(--mist)}
+.btn.ghost:hover{color:var(--ink); border-color:var(--ink)}
+
+/* pergunta */
+.qhead{
+  display:flex; align-items:baseline; justify-content:space-between;
+  margin:clamp(10px,2vh,18px) 0 clamp(6px,1.2vh,10px);
+}
+.qnum{
+  font-family:var(--serif); font-style:italic; font-size:1rem;
+  color:var(--amber); letter-spacing:.05em;
+}
+.ticks{display:flex; gap:6px}
+.tick{
+  width:26px; height:2px; background:var(--sand);
+  transition:background .5s;
+}
+.tick.done{background:var(--amber)}
+.qtext{
+  font-family:var(--serif); font-weight:400;
+  font-size:clamp(1.5rem,4.2vw,2.1rem); line-height:1.15;
+  text-wrap:pretty; margin-bottom:clamp(14px,2.5vh,24px);
+}
+.opts{display:flex; flex-direction:column; gap:10px}
+.opt{
+  text-align:left; font-family:var(--sans); font-weight:300;
+  font-size:clamp(.95rem,2.5vw,1.05rem); line-height:1.45;
+  color:var(--ink); background:transparent;
+  border:1px solid var(--sand); border-radius:14px;
+  padding:16px 20px; cursor:pointer;
+  transition:border-color .25s, background .25s, transform .15s;
+}
+.opt:hover{border-color:var(--stone); background:rgba(255,255,255,.35)}
+.opt:focus-visible{outline:2px solid var(--amber); outline-offset:2px}
+.opt.picked{
+  border-color:var(--amber); background:rgba(181,146,76,.08);
+  transform:scale(.99);
+}
+.opts.locked .opt{pointer-events:none}
+.opts.locked .opt:not(.picked){opacity:.45}
+
+/* resultado */
+.result{justify-content:center; text-align:center; gap:clamp(10px,1.8vh,16px)}
+.result .eyebrow{color:var(--amber)}
+.rname{
+  font-family:var(--serif); font-weight:300; font-style:italic;
+  font-size:clamp(2.2rem,6.5vw,3.6rem); line-height:1.05; text-wrap:pretty;
+}
+.rline{
+  font-size:clamp(.95rem,2.4vw,1.05rem); color:var(--ink);
+  max-width:44ch; margin:0 auto; line-height:1.55;
+}
+.rfacts{
+  display:flex; justify-content:center; gap:clamp(14px,3.5vw,32px);
+  flex-wrap:wrap; margin-top:4px;
+}
+.rfact{
+  font-size:10.5px; letter-spacing:.16em; text-transform:uppercase;
+  color:var(--stone); line-height:1.7;
+}
+.rnote{
+  font-size:.85rem; color:var(--stone); max-width:40ch;
+  margin:2px auto 6px; line-height:1.55;
+}
+.ractions{display:flex; gap:12px; justify-content:center; flex-wrap:wrap; margin-top:6px}
+
+/* Fabi no CTA */
+.fabi-cta{
+  display:flex; flex-direction:column; align-items:center;
+  gap:8px; margin-top:10px;
+}
+.fabi-ring{
+  position:relative; width:86px; height:86px; border-radius:50%;
+  flex:none;
+}
+.fabi-ring img{
+  width:100%; height:100%; border-radius:50%;
+  object-fit:cover; display:block;
+  border:1px solid var(--sand);
+}
+.fabi-ring::before,
+.fabi-ring::after{
+  content:""; position:absolute; inset:-7px; border-radius:50%;
+  border:1px solid var(--amber); opacity:0;
+  animation:pulse 3.2s ease-out infinite;
+}
+.fabi-ring::after{animation-delay:1.6s}
+@keyframes pulse{
+  0%{transform:scale(.92); opacity:0}
+  25%{opacity:.5}
+  100%{transform:scale(1.22); opacity:0}
+}
+.fabi-label{
+  font-size:10px; letter-spacing:.2em; text-transform:uppercase;
+  color:var(--stone);
+}
+
+/* rodapé */
+.foot{
+  text-align:center; font-size:10px; letter-spacing:.18em;
+  text-transform:uppercase; color:var(--mist);
+  padding:14px 0 18px;
+}
+
+@media (min-width:840px){
+  .app{flex-direction:row; align-items:stretch; gap:56px; padding-top:0}
+  .col-stage{flex:1.15; display:flex; flex-direction:column}
+  .col-panel{flex:1; display:flex; flex-direction:column; padding-top:clamp(40px,8vh,90px)}
+  .stage{height:min(62vh,520px); margin-top:auto; margin-bottom:auto}
+  .intro{text-align:left}
+  .intro p{margin:0}
+  .intro .btn{align-self:flex-start}
+  .result{text-align:left}
+  .result .rline,.result .rnote{margin-left:0}
+  .rfacts,.ractions{justify-content:flex-start}
+  .fabi-cta{flex-direction:row; align-items:center; gap:14px}
+}
+
+@media (prefers-reduced-motion:reduce){
+  *{animation:none!important; transition:none!important}
+  .layer text{opacity:1}
+}
+</style>
+</head>
+<body>
+<canvas id="neve" aria-hidden="true"></canvas>
+<div class="app">
+  <div class="col-stage">
+    <header class="masthead">
+      <span class="brand">Menton Travel Boutique</span>
+      <button id="vibe" aria-pressed="false" aria-label="Ativar a curadoria comentada da Fabi">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M5.4 13.2a6.9 6.9 0 0 1 13.2 0"/>
+          <circle cx="5.8" cy="15.6" r="3"/>
+          <circle cx="5.8" cy="15.6" r="1.35"/>
+          <circle cx="18.2" cy="15.6" r="3"/>
+          <circle cx="18.2" cy="15.6" r="1.35"/>
+        </svg>
+        <span>curadoria comentada</span>
+        <span class="vb-dots"><i></i><i></i><i></i></span>
+        <span class="vb-eq"><i></i><i></i><i></i></span>
+      </button>
+      <span class="season">Inverno 26/27</span>
+    </header>
+
+    <div class="stage" aria-hidden="true">
+      <svg viewBox="0 0 700 460" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Desenho de uma montanha que se completa a cada resposta">
+
+        <!-- ══════════ VAL D'ISÈRE · a esportiva ══════════ -->
+        <g class="mountain" id="m-val">
+          <g class="layer" data-l="1">
+            <path class="draw" d="M28 392 L92 300 L128 322 L198 204 L244 246 L312 140 L356 194 L414 126 L458 184 L512 160 L584 264 L672 392"/>
+          </g>
+          <g class="layer" data-l="2">
+            <path class="draw fine" d="M312 140 L324 200 L310 268 L322 340"/>
+            <path class="draw fine" d="M414 126 L430 190 L420 258 L432 322"/>
+            <path class="draw fine" d="M198 204 L214 258 L204 310"/>
+            <path class="draw dotted" d="M52 392 Q210 374 360 378 Q530 382 668 370"/>
+          </g>
+          <g class="layer" data-l="3">
+            <path class="draw dotted" d="M316 150 C288 210 336 250 306 306 C290 336 316 364 304 388"/>
+            <path class="draw dotted" d="M416 136 C452 196 404 240 444 292 C468 324 440 360 456 388"/>
+            <path class="draw dotted" d="M456 188 C480 230 460 268 488 306 C506 332 492 362 504 388"/>
+            <text x="472" y="106">300 km · Espace Killy</text>
+          </g>
+          <g class="layer" data-l="4">
+            <path class="draw fine" d="M138 372 L338 190"/>
+            <path class="draw fine" d="M196 320 l0 34 M188 354 l16 0 M282 242 l0 34 M274 276 l16 0"/>
+            <path class="draw fine" d="M232 288 l0 16 m-7 16 l0 -16 l14 0 l0 16 m-14 -8 l14 0"/>
+            <path class="draw fine" d="M162 350 l0 14 m-6 14 l0 -14 l12 0 l0 14 m-12 -7 l12 0"/>
+            <path class="draw fine" d="M78 392 l0 -14 l14 -12 l14 12 l0 14 M108 392 l0 -12 l12 -10 l12 10 l0 12 M136 392 l0 -10 l11 -9 l11 9 l0 10"/>
+            <text x="62" y="422">Village · 1.850 m</text>
+          </g>
+          <g class="layer" data-l="5">
+            <path class="draw" d="M544 296 q7 -12 17 -7 M561 289 l14 11 M575 300 l-7 16 M568 316 l19 6 M552 328 l42 2"/>
+            <circle class="draw" cx="556" cy="280" r="5"/>
+            <path class="draw fine" d="M583 302 l14 22 M556 306 l-4 24"/>
+            <path class="draw dotted" d="M414 126 L414 72"/>
+            <text class="cota" x="424" y="66">3.456 m</text>
+            <text x="452" y="422">Perfil · primeira cadeira do dia</text>
+          </g>
+        </g>
+
+        <!-- ══════════ COURCHEVEL · a gourmet ══════════ -->
+        <g class="mountain" id="m-cou">
+          <g class="layer" data-l="1">
+            <path class="draw" d="M24 392 C90 344 130 316 168 296 C210 272 246 262 278 244 C310 226 336 214 356 196 L382 158 L390 176 L386 190 L404 216 C430 248 460 272 492 296 C540 330 610 366 676 392"/>
+          </g>
+          <g class="layer" data-l="2">
+            <path class="draw fine" d="M382 158 L388 216 L376 274 L386 332"/>
+            <path class="draw fine" d="M278 244 L294 292 L284 344"/>
+            <path class="draw fine" d="M404 216 L426 262 L418 314"/>
+            <path class="draw dotted" d="M50 392 Q240 374 400 378 Q560 382 672 370"/>
+          </g>
+          <g class="layer" data-l="3">
+            <path class="draw fine" d="M120 342 l104 0"/>
+            <path class="draw fine" d="M158 342 l0 -46 M132 306 C132 290 184 290 184 306 C184 296 168 292 158 292 C148 292 132 296 132 306"/>
+            <path class="draw fine" d="M186 342 l0 -22 m-12 0 l24 0 l-3 -18 l-18 0 l-3 18"/>
+            <path class="draw fine" d="M204 322 c0 6 3 8 3 11 l0 9 m-6 0 l12 0 M200 322 l10 0"/>
+            <path class="draw fine" d="M138 342 l0 -14 l-8 -8 M136 328 l8 -8"/>
+            <text x="84" y="252">13 estrelas Michelin</text>
+          </g>
+          <g class="layer" data-l="4">
+            <path class="draw fine" d="M448 258 L636 366"/>
+            <path class="draw fine" d="M500 288 l0 42 M490 330 l20 0 M584 336 l0 30 M575 366 l18 0"/>
+            <path class="draw fine" d="M541 312 l0 10 m-9 3 c0 -10 18 -10 18 0 c0 12 -18 12 -18 0"/>
+            <path class="draw fine" d="M556 392 l0 -13 l13 -11 l13 11 l0 13 M586 392 l0 -11 l12 -10 l12 10 l0 11 M614 392 l0 -10 l10 -8 l10 8 l0 10"/>
+            <circle class="draw fine" cx="569" cy="384" r="1.6"/>
+            <circle class="draw fine" cx="598" cy="386" r="1.6"/>
+            <circle class="draw fine" cx="624" cy="388" r="1.6"/>
+            <text x="420" y="422">Courchevel 1850 · Les 3 Vallées</text>
+          </g>
+          <g class="layer" data-l="5">
+            <path class="draw" d="M310 320 q8 -11 18 -6 M328 314 l13 12 M341 326 l-9 15 M332 341 l21 5 M318 352 l40 2"/>
+            <circle class="draw" cx="322" cy="304" r="5"/>
+            <path class="draw dotted" d="M382 158 L382 98"/>
+            <text class="cota" x="392" y="92">La Saulire · 2.738 m</text>
+            <text x="62" y="422">Perfil · mesa reservada na montanha</text>
+          </g>
+        </g>
+
+        <!-- ══════════ ZERMATT · a cênica ══════════ -->
+        <g class="mountain" id="m-zer">
+          <g class="layer" data-l="1">
+            <path class="draw" d="M20 392 L110 306 L156 330 L218 226 L268 172 L316 122 L344 66 L352 84 L348 102 L372 148 L404 214 L448 262 L502 296 L560 330 L676 392"/>
+          </g>
+          <g class="layer" data-l="2">
+            <path class="draw fine" d="M344 66 L336 128 L346 190 L332 258"/>
+            <path class="draw fine" d="M344 66 L366 116 L360 170"/>
+            <path class="draw dotted" d="M44 392 Q220 376 380 380 Q550 384 672 372"/>
+          </g>
+          <g class="layer" data-l="3">
+            <path class="draw fine" d="M672 344 C590 334 520 330 452 318 C410 310 372 302 342 298"/>
+            <path class="draw fine" d="M478 344 c0 -14 10 -22 22 -22 M522 348 c0 -14 10 -22 22 -22 M566 352 c0 -14 10 -22 22 -22"/>
+            <path class="draw fine" d="M548 322 l0 -13 l38 0 l3 13 M596 320 l0 -13 l34 0 l0 13 M554 309 l7 -7 l20 0 l7 7 M602 307 l7 -7 l18 0 l7 7 M561 300 l6 -8"/>
+            <circle class="draw fine" cx="558" cy="315" r="2"/>
+            <circle class="draw fine" cx="576" cy="315" r="2"/>
+            <circle class="draw fine" cx="606" cy="313" r="2"/>
+            <circle class="draw fine" cx="622" cy="313" r="2"/>
+            <text x="498" y="240">Chega-se de trem</text>
+          </g>
+          <g class="layer" data-l="4">
+            <path class="draw fine" d="M118 392 l0 -12 l16 -13 l16 13 l0 12 M154 392 l0 -10 l14 -11 l14 11 l0 10 M186 392 l0 -11 l15 -12 l15 12 l0 11"/>
+            <path class="draw fine" d="M230 392 l0 -32 l8 -10 l8 10 l0 32 M238 350 l0 -12 m-5 5 l10 0"/>
+            <circle class="draw fine" cx="134" cy="384" r="1.6"/>
+            <circle class="draw fine" cx="168" cy="386" r="1.6"/>
+            <text x="62" y="422">Vila sem carros</text>
+          </g>
+          <g class="layer" data-l="5">
+            <path class="draw" d="M420 300 q7 -11 16 -7 M436 293 l13 11 M449 304 l-8 14 M441 318 l20 5 M428 328 l36 2"/>
+            <circle class="draw" cx="431" cy="286" r="5"/>
+            <path class="draw dotted" d="M344 66 L344 30"/>
+            <text class="cota" x="354" y="26">Matterhorn · 4.478 m</text>
+            <text x="440" y="422">Perfil · a paisagem comanda o dia</text>
+          </g>
+        </g>
+
+        <!-- ══════════ LA ROSIÈRE · a familiar ══════════ -->
+        <g class="mountain" id="m-ros">
+          <g class="layer" data-l="1">
+            <path class="draw" d="M26 392 C90 340 140 296 196 258 C240 228 274 214 300 208 C318 204 334 206 348 214 L392 244 L420 232 C450 220 478 226 506 246 C560 284 620 342 676 392"/>
+          </g>
+          <g class="layer" data-l="2">
+            <path class="draw fine" d="M300 208 L312 262 L300 316 L310 362"/>
+            <path class="draw fine" d="M470 234 L484 284 L474 334"/>
+            <path class="draw dotted" d="M50 392 Q230 376 390 380 Q560 384 672 372"/>
+          </g>
+          <g class="layer" data-l="3">
+            <path class="draw dotted" d="M180 388 C240 340 300 300 368 236 C420 288 500 340 560 388"/>
+            <path class="draw fine" d="M356 226 l0 -26 l16 6 l-16 6 M404 240 l0 -26 l16 6 l-16 6"/>
+            <text x="256" y="150">França → Itália, de ski</text>
+            <text x="298" y="172">Espace San Bernardo</text>
+          </g>
+          <g class="layer" data-l="4">
+            <circle class="draw fine" cx="106" cy="120" r="22"/>
+            <path class="draw fine" d="M106 86 l0 -12 M106 154 l0 12 M72 120 l-12 0 M140 120 l12 0 M82 96 l-9 -9 M130 144 l9 9 M82 144 l-9 9 M130 96 l9 -9"/>
+            <path class="draw fine" d="M120 392 l0 -15 l16 -13 l16 13 l0 15 M158 392 l0 -12 l14 -11 l14 11 l0 12 M192 392 l0 -13 l15 -12 l15 12 l0 13"/>
+            <circle class="draw fine" cx="136" cy="383" r="1.6"/>
+            <circle class="draw fine" cx="172" cy="385" r="1.6"/>
+            <text x="62" y="422">Village ao sol · 1.950 m</text>
+          </g>
+          <g class="layer" data-l="5">
+            <path class="draw" d="M520 300 q7 -11 16 -7 M536 293 l13 11 M549 304 l-8 15 M541 319 l19 5 M528 330 l36 2"/>
+            <circle class="draw" cx="531" cy="284" r="5"/>
+            <path class="draw" d="M578 330 q5 -8 12 -5 M590 325 l9 8 M599 333 l-6 11 M593 344 l14 4 M584 352 l26 1"/>
+            <circle class="draw" cx="586" cy="318" r="4"/>
+            <text x="446" y="422">Perfil · a família toda na montanha</text>
+          </g>
+        </g>
+
+        <!-- ══════════ ST. MORITZ · a clássica ══════════ -->
+        <g class="mountain" id="m-stm">
+          <g class="layer" data-l="1">
+            <path class="draw" d="M24 392 C80 350 130 310 180 278 L232 236 L262 254 L316 202 L354 224 L408 184 C450 214 490 244 530 274 C580 310 630 354 676 392"/>
+          </g>
+          <g class="layer" data-l="2">
+            <path class="draw fine" d="M408 184 L420 242 L408 300 L418 352"/>
+            <path class="draw fine" d="M316 202 L328 252 L318 304"/>
+            <path class="draw dotted" d="M50 392 Q230 376 390 380 Q560 384 672 372"/>
+          </g>
+          <g class="layer" data-l="3">
+            <path class="draw fine" d="M160 392 C160 376 220 366 290 366 C360 366 420 376 420 392"/>
+            <path class="draw fine" d="M250 352 c8 -3 16 -3 22 0 l10 3 M282 355 l6 -14 M288 341 c3 -5 8 -6 12 -3 M282 355 l10 8 M292 363 l14 -2 M266 355 l-3 14 M276 356 l2 14 M296 364 l4 12 M306 362 l6 10 M300 338 c2 -4 7 -4 9 -1 M258 353 l-12 -4 l-8 4"/>
+            <path class="draw fine" d="M310 344 l14 20"/>
+            <circle class="draw fine" cx="340" cy="372" r="2"/>
+            <text x="196" y="318">Polo no lago congelado</text>
+          </g>
+          <g class="layer" data-l="4">
+            <path class="draw fine" d="M520 392 l0 -44 l64 0 l0 44 M552 348 l0 -18 l14 0 l0 18 M552 330 l0 -10 M547 335 l10 -5"/>
+            <circle class="draw fine" cx="532" cy="362" r="1.6"/>
+            <circle class="draw fine" cx="546" cy="362" r="1.6"/>
+            <circle class="draw fine" cx="560" cy="362" r="1.6"/>
+            <circle class="draw fine" cx="574" cy="362" r="1.6"/>
+            <circle class="draw fine" cx="532" cy="378" r="1.6"/>
+            <circle class="draw fine" cx="574" cy="378" r="1.6"/>
+            <text x="452" y="422">Desde 1864</text>
+          </g>
+          <g class="layer" data-l="5">
+            <path class="draw" d="M118 320 q7 -11 16 -7 M134 313 l13 11 M147 324 l-8 15 M139 339 l19 5 M126 350 l36 2"/>
+            <circle class="draw" cx="129" cy="304" r="5"/>
+            <path class="draw dotted" d="M408 184 L408 128"/>
+            <text class="cota" x="418" y="122">Engadina · 1.822 m</text>
+            <text x="62" y="422">Perfil · o inverno como salão</text>
+          </g>
+        </g>
+      </svg>
+    </div>
+  </div>
+
+  <div class="col-panel">
+    <main class="panel">
+
+      <!-- intro -->
+      <section class="screen intro active" id="s-intro">
+        <span class="eyebrow">Os Alpes em cinco vibes</span>
+        <h1>Qual é a sua montanha?</h1>
+        <p>Cinco perguntas. A cada resposta, uma montanha se desenha. No fim, você descobre a sua e a Fabi diz se o timing fecha.</p>
+        <button class="btn" id="start">Começar</button>
+        <p class="hint">Toque no fone e ouça os comentários da Fabi</p>
+      </section>
+
+      <!-- pergunta -->
+      <section class="screen" id="s-quiz">
+        <div class="qhead">
+          <span class="qnum" id="qnum">01 / 05</span>
+          <div class="ticks" id="ticks"></div>
+        </div>
+        <h2 class="qtext" id="qtext"></h2>
+        <div class="opts" id="opts"></div>
+      </section>
+
+      <!-- resultado -->
+      <section class="screen result" id="s-result">
+        <span class="eyebrow">A sua montanha</span>
+        <h2 class="rname" id="rname"></h2>
+        <p class="rline" id="rline"></p>
+        <div class="rfacts" id="rfacts"></div>
+        <p class="rnote">As reservas do inverno 26/27 já abriram. As semanas de alta temporada são as primeiras a fechar.</p>
+        <div class="fabi-cta">
+          <span class="fabi-ring"><img src="fabi.jpg" alt="Fabi Ferrari, da Menton Travel Boutique"></span>
+          <span class="fabi-label">Fabi Ferrari · Menton</span>
+        </div>
+        <div class="ractions">
+          <a class="btn amber" id="cta-wa" href="#" target="_blank" rel="noopener">Escrever para a Fabi</a>
+          <button class="btn ghost" id="redo">Refazer</button>
+        </div>
+      </section>
+
+    </main>
+    <footer class="foot">Menton Travel Boutique · Curadoria de viagem</footer>
+  </div>
+</div>
+
+<script>
+const QUESTIONS = [
+  {
+    t: "O despertador, na primeira manhã de neve:",
+    o: [
+      { txt: "Toca antes das oito. A primeira cadeira do dia é minha.", w: "v" },
+      { txt: "Toca sem pressa. O café vem antes da pista.", w: "c" },
+      { txt: "Quem acorda a casa são as crianças, prontas antes dos adultos.", w: "r" },
+      { txt: "Toca tarde. O inverno também acontece fora da pista.", w: "s" },
+    ],
+  },
+  {
+    t: "Na pista, com honestidade:",
+    o: [
+      { txt: "Procuro a preta do mapa e o fora de pista com guia.", w: "v" },
+      { txt: "Vou bem na vermelha, sem heroísmo.", w: "c" },
+      { txt: "Azuis longas, com paisagem e sem plateia.", w: "z" },
+      { txt: "Cada um no seu nível, todos na mesma montanha.", w: "r" },
+    ],
+  },
+  {
+    t: "O almoço na montanha:",
+    o: [
+      { txt: "Vinte minutos no refúgio do topo. A tarde tem pista.", w: "v" },
+      { txt: "Mesa reservada há um mês, duas horas de conversa.", w: "c" },
+      { txt: "Um rösti num chalé de madeira, com vista para o vale.", w: "z" },
+      { txt: "No salão do hotel, com talheres de prata.", w: "s" },
+    ],
+  },
+  {
+    t: "Quando as pistas fecham:",
+    o: [
+      { txt: "Uma taça na rua principal, vitrines acesas.", w: "c" },
+      { txt: "Caminhar pela vila sem carros e ver o pico mudar de cor.", w: "z" },
+      { txt: "Chocolate quente e as crianças contando a própria descida.", w: "r" },
+      { txt: "Chá no lobby, piano ao fundo, ninguém com pressa.", w: "s" },
+    ],
+  },
+  {
+    t: "A foto que volta para casa:",
+    o: [
+      { txt: "O aplicativo com os quilômetros e o desnível do dia.", w: "v" },
+      { txt: "O trem vermelho subindo na neve.", w: "z" },
+      { txt: "Todo mundo junto no alto, do menor ao maior.", w: "r" },
+      { txt: "O polo no lago congelado, cavalos na neve.", w: "s" },
+    ],
+  },
+];
+
+const MOUNTAINS = {
+  v: {
+    id: "m-val",
+    name: "Val d'Isère, a esportiva.",
+    line: "É a sua se você sobe na primeira cadeira do dia e desce quando as pistas fecham.",
+    facts: ["300 km de pistas", "Espace Killy", "Village a 1.850 m"],
+    wa: "Fabi, fiz o quiz da Menton: a minha montanha é Val d'Isère. O timing para o inverno 26/27 ainda fecha?",
+  },
+  c: {
+    id: "m-cou",
+    name: "Courchevel, a gourmet.",
+    line: "É a sua se você escolhe a montanha também pelo cardápio.",
+    facts: ["13 estrelas Michelin", "600 km · Les 3 Vallées", "La Saulire · 2.738 m"],
+    wa: "Fabi, fiz o quiz da Menton: a minha montanha é Courchevel. O timing para o inverno 26/27 ainda fecha?",
+  },
+  z: {
+    id: "m-zer",
+    name: "Zermatt, a cênica.",
+    line: "É a sua se a viagem começa na janela do trem, antes da primeira descida.",
+    facts: ["Matterhorn · 4.478 m", "Vila sem carros", "Chega-se de trem"],
+    wa: "Fabi, fiz o quiz da Menton: a minha montanha é Zermatt. O timing para o inverno 26/27 ainda fecha?",
+  },
+  r: {
+    id: "m-ros",
+    name: "La Rosière, a familiar.",
+    line: "É a sua se você almoça na Itália e volta esquiando para a França na mesma tarde.",
+    facts: ["Village ao sol · 1.950 m", "Espace San Bernardo", "França e Itália de ski"],
+    wa: "Fabi, fiz o quiz da Menton: a minha montanha é La Rosière. O timing para o inverno 26/27 ainda fecha?",
+  },
+  s: {
+    id: "m-stm",
+    name: "St. Moritz, a clássica.",
+    line: "É a sua se o inverno vale a viagem mesmo sem calçar o ski: polo no lago congelado e um século e meio de temporada.",
+    facts: ["Desde 1864", "Polo no lago congelado", "Engadina · Suíça"],
+    wa: "Fabi, fiz o quiz da Menton: a minha montanha é St. Moritz. O timing para o inverno 26/27 ainda fecha?",
+  },
+};
+
+const KEYS = ["v", "c", "z", "r", "s"];
+const WA_NUMBER = "5548999610776";
+const state = { i: 0, score: { v: 0, c: 0, z: 0, r: 0, s: 0 }, leader: "z", picks: [] };
+const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/* ---------- desenho ---------- */
+function prepPaths() {
+  document.querySelectorAll(".mountain .draw").forEach((p) => {
+    const len = p.getTotalLength ? p.getTotalLength() : 0;
+    if (!len) return;
+    p.style.strokeDasharray = len;
+    p.style.strokeDashoffset = len;
+    p.style.transition = "none";
+  });
+}
+function drawLayer(g, delay = 0) {
+  g.classList.add("on");
+  g.querySelectorAll(".draw").forEach((p, k) => {
+    const len = parseFloat(p.style.strokeDasharray || 0);
+    if (!len) return;
+    if (reduced) { p.style.strokeDashoffset = 0; return; }
+    p.style.transition = "none";
+    p.style.strokeDashoffset = len;
+    requestAnimationFrame(() => {
+      setTimeout(() => {
+        p.style.transition = `stroke-dashoffset ${Math.min(1.6, 0.5 + len / 800)}s cubic-bezier(.4,0,.2,1)`;
+        p.style.strokeDashoffset = 0;
+      }, delay + k * 140);
+    });
+  });
+}
+function resetLayers(mid) {
+  document.querySelectorAll(`#${mid} .layer`).forEach((g) => {
+    g.classList.remove("on");
+    g.querySelectorAll(".draw").forEach((p) => {
+      const len = parseFloat(p.style.strokeDasharray || 0);
+      p.style.transition = "none";
+      p.style.strokeDashoffset = len;
+    });
+  });
+}
+function showMountain(key, upTo) {
+  const next = MOUNTAINS[key].id;
+  document.querySelectorAll(".mountain").forEach((m) => {
+    if (m.id !== next) { m.classList.remove("active"); resetLayers(m.id); }
+  });
+  const el = document.getElementById(next);
+  const wasActive = el.classList.contains("active");
+  el.classList.add("active");
+  const layers = el.querySelectorAll(".layer");
+  layers.forEach((g) => {
+    const n = +g.dataset.l;
+    if (n <= upTo && !g.classList.contains("on")) {
+      drawLayer(g, wasActive ? 100 : 250 + n * 160);
+    }
+  });
+}
+
+/* ---------- fluxo ---------- */
+const $ = (id) => document.getElementById(id);
+function go(id) {
+  document.querySelectorAll(".screen").forEach((s) => s.classList.remove("active"));
+  $(id).classList.add("active");
+}
+function renderTicks() {
+  $("ticks").innerHTML = QUESTIONS.map((_, k) =>
+    `<span class="tick${k < state.i ? " done" : ""}"></span>`).join("");
+}
+function renderQuestion() {
+  const q = QUESTIONS[state.i];
+  $("qnum").textContent = `0${state.i + 1} / 05`;
+  $("qtext").textContent = q.t;
+  renderTicks();
+  const box = $("opts");
+  box.classList.remove("locked");
+  box.innerHTML = "";
+  q.o.forEach((opt) => {
+    const b = document.createElement("button");
+    b.className = "opt";
+    b.textContent = opt.txt;
+    b.addEventListener("click", () => pick(b, opt.w));
+    box.appendChild(b);
+  });
+}
+function computeLeader() {
+  const s = state.score;
+  const order = [...KEYS].sort((a, b) => s[b] - s[a]);
+  if (s[order[0]] === s[order[1]]) {
+    const last = state.picks[state.picks.length - 1];
+    if (s[last] === s[order[0]]) return last;
+  }
+  return order[0];
+}
+function pick(btn, w) {
+  const box = $("opts");
+  box.classList.add("locked");
+  btn.classList.add("picked");
+  curadoria.comment(state.i, w);
+  state.score[w]++;
+  state.picks.push(w);
+  state.leader = computeLeader();
+  showMountain(state.leader, state.i + 1);
+  renderTicks();
+  setTimeout(() => {
+    state.i++;
+    if (state.i < QUESTIONS.length) {
+      renderQuestion();
+    } else {
+      showResult();
+    }
+  }, reduced ? 300 : 1250);
+}
+function showResult() {
+  const m = MOUNTAINS[state.leader];
+  $("rname").textContent = m.name;
+  $("rline").textContent = m.line;
+  $("rfacts").innerHTML = m.facts.map((f) => `<span class="rfact">${f}</span>`).join("");
+  $("cta-wa").href = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(m.wa)}`;
+  showMountain(state.leader, 5);
+  go("s-result");
+  curadoria.verdict(state.leader);
+}
+function restart() {
+  curadoria.stop();
+  state.i = 0; state.score = { v: 0, c: 0, z: 0, r: 0, s: 0 }; state.picks = []; state.leader = "z";
+  document.querySelectorAll(".mountain").forEach((m) => { m.classList.remove("active"); resetLayers(m.id); });
+  renderQuestion();
+  introDraw();
+  go("s-quiz");
+  showMountain("z", 0);
+}
+
+/* intro: a silhueta do Matterhorn se desenha fantasma */
+function introDraw() {
+  const zer = $("m-zer");
+  zer.classList.add("active");
+  zer.style.opacity = .22;
+  drawLayer(zer.querySelector('[data-l="1"]'), 500);
+}
+$("start").addEventListener("click", () => {
+  const zer = $("m-zer");
+  zer.style.opacity = "";
+  zer.classList.remove("active");
+  resetLayers("m-zer");
+  renderQuestion();
+  go("s-quiz");
+  neveStart();
+});
+$("redo").addEventListener("click", restart);
+
+/* ---------- neve ---------- */
+const neve = (() => {
+  const cv = $("neve"), ctx = cv.getContext("2d");
+  let flakes = [], running = false, raf = null;
+  function size() {
+    cv.width = innerWidth * devicePixelRatio;
+    cv.height = innerHeight * devicePixelRatio;
+    ctx.scale(devicePixelRatio, devicePixelRatio);
+  }
+  function make(n) {
+    flakes = Array.from({ length: n }, () => ({
+      x: Math.random() * innerWidth,
+      y: Math.random() * innerHeight,
+      r: 0.7 + Math.random() * 1.7,
+      v: 0.25 + Math.random() * 0.55,
+      a: 0.12 + Math.random() * 0.3,
+      ph: Math.random() * Math.PI * 2,
+      sw: 0.15 + Math.random() * 0.35,
+    }));
+  }
+  function tick(t) {
+    if (!running) return;
+    ctx.clearRect(0, 0, innerWidth, innerHeight);
+    ctx.fillStyle = "#B0A899";
+    for (const f of flakes) {
+      f.y += f.v;
+      f.x += Math.sin(t / 2400 + f.ph) * f.sw;
+      if (f.y > innerHeight + 4) { f.y = -4; f.x = Math.random() * innerWidth; }
+      if (f.x > innerWidth + 4) f.x = -4;
+      if (f.x < -4) f.x = innerWidth + 4;
+      ctx.globalAlpha = f.a;
+      ctx.beginPath();
+      ctx.arc(f.x, f.y, f.r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+    raf = requestAnimationFrame(tick);
+  }
+  addEventListener("resize", () => { if (running) { size(); } });
+  return {
+    start() {
+      if (running || reduced) return;
+      running = true;
+      size();
+      make(Math.max(36, Math.min(90, Math.round(innerWidth / 16))));
+      cv.classList.add("on");
+      raf = requestAnimationFrame(tick);
+    },
+    stop() {
+      running = false;
+      cv.classList.remove("on");
+      if (raf) cancelAnimationFrame(raf);
+      ctx.clearRect(0, 0, innerWidth, innerHeight);
+    },
+  };
+})();
+function neveStart() { neve.start(); }
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) neve.stop();
+  else if (!$("s-intro").classList.contains("active")) neve.start();
+});
+
+/* ---------- curadoria comentada (voz da Fabi, opt-in) ---------- */
+const curadoria = (() => {
+  const vibe = $("vibe");
+  let on = false, current = null;
+  vibe.classList.add("ready");
+  function stop() {
+    if (current) { current.pause(); current = null; }
+    vibe.classList.remove("playing");
+  }
+  vibe.addEventListener("click", () => {
+    on = !on;
+    vibe.classList.toggle("on", on);
+    vibe.setAttribute("aria-pressed", String(on));
+    if (!on) stop();
+  });
+  function play(id) {
+    if (!on) return;
+    stop();
+    const a = new Audio(`audio/${id}.mp3`);
+    a.volume = 0.95;
+    current = a;
+    a.addEventListener("play", () => vibe.classList.add("playing"));
+    a.addEventListener("ended", () => { if (current === a) { current = null; vibe.classList.remove("playing"); } });
+    a.play().catch(() => { vibe.classList.remove("playing"); });
+  }
+  document.addEventListener("visibilitychange", () => { if (document.hidden) stop(); });
+  return {
+    comment(qIndex, w) { play(`q${qIndex + 1}${w}`); },
+    verdict(leader) { setTimeout(() => play(`r${leader}`), 700); },
+    stop,
+  };
+})();
+
+window.addEventListener("load", () => { prepPaths(); introDraw(); });
+</script>
+</body>
+</html>
