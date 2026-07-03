@@ -9,12 +9,12 @@
 <meta property="og:description" content="Cinco perguntas. A cada resposta, uma montanha se desenha.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://suamontanha.mentontravel.boutique/">
-<meta property="og:image" content="https://jessegiotti-stack.github.io/suamontanha/og.png">
+<meta property="og:image" content="https://suamontanha.mentontravel.boutique/og.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:type" content="image/png">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:image" content="https://jessegiotti-stack.github.io/suamontanha/og.png">
+<meta name="twitter:image" content="https://suamontanha.mentontravel.boutique/og.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
@@ -296,7 +296,7 @@ h1{
   <div class="col-stage">
     <header class="masthead">
       <span class="brand">Menton Travel Boutique</span>
-      <button id="vibe" aria-pressed="false" aria-label="Ativar a curadoria comentada da Fabi">
+      <button id="vibe" aria-pressed="false" aria-label="Ligar a trilha sonora">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <path d="M5.4 13.2a6.9 6.9 0 0 1 13.2 0"/>
           <circle cx="5.8" cy="15.6" r="3"/>
@@ -304,7 +304,7 @@ h1{
           <circle cx="18.2" cy="15.6" r="3"/>
           <circle cx="18.2" cy="15.6" r="1.35"/>
         </svg>
-        <span>curadoria comentada</span>
+        <span>vibing</span>
         <span class="vb-dots"><i></i><i></i><i></i></span>
         <span class="vb-eq"><i></i><i></i><i></i></span>
       </button>
@@ -504,7 +504,7 @@ h1{
         <h1>Qual é a sua montanha?</h1>
         <p>Cinco perguntas. A cada resposta, uma montanha se desenha. No fim, você descobre a sua e a Fabi diz se o timing fecha.</p>
         <button class="btn" id="start">Começar</button>
-        <p class="hint">Toque no fone e ouça os comentários da Fabi</p>
+        <p class="hint">Toque no fone, no alto, pra ligar a trilha</p>
       </section>
 
       <!-- pergunta -->
@@ -838,64 +838,41 @@ document.addEventListener("visibilitychange", () => {
   else if (!$("s-intro").classList.contains("active")) neve.start();
 });
 
-/* ---------- curadoria comentada: música francesa ao fundo + Fabi ambiente ---------- */
-const curadoria = (() => {
+/* ---------- vibing: trilha sonora opt-in (padrão da LP) ---------- */
+(() => {
   const vibe = $("vibe");
-  const VOL_MUSICA = 0.12, VOL_DUCK = 0.04;
-  const musica = new Audio("audio/musica-fabi.mp3");
-  musica.loop = true;
-  musica.preload = "none";
-  const voz = new Audio();
-  voz.volume = 0.95;
-  voz.preload = "none";
-  let on = false, ambPool = ["alpes1", "alpes2", "alpes3"], ambNext = 0;
+  const aud = new Audio("audio/musica.mp3");
+  aud.loop = true;
+  aud.preload = "metadata";
+  let fadeIv = null, wasOn = false;
   vibe.classList.add("ready");
-  function duck(down) {
-    musica.volume = down ? VOL_DUCK : VOL_MUSICA;
-  }
-  voz.addEventListener("play", () => { vibe.classList.add("playing"); duck(true); });
-  voz.addEventListener("ended", () => { vibe.classList.remove("playing"); duck(false); });
-  voz.addEventListener("pause", () => { vibe.classList.remove("playing"); duck(false); });
-  function fala(id) {
-    if (!on) return;
-    voz.pause();
-    voz.src = `audio/${id}.mp3`;
-    voz.currentTime = 0;
-    voz.play().catch(() => vibe.classList.remove("playing"));
-  }
-  function stopAll() {
-    voz.pause();
-    musica.pause();
-    vibe.classList.remove("playing");
+  function vfade(to, ms, then) {
+    clearInterval(fadeIv);
+    const from = aud.volume, t0 = performance.now();
+    fadeIv = setInterval(() => {
+      const k = Math.min(1, (performance.now() - t0) / ms);
+      aud.volume = from + (to - from) * k;
+      if (k >= 1) { clearInterval(fadeIv); if (then) then(); }
+    }, 50);
   }
   vibe.addEventListener("click", () => {
-    on = !on;
-    vibe.classList.toggle("on", on);
-    vibe.setAttribute("aria-pressed", String(on));
-    if (on) {
-      musica.volume = VOL_MUSICA;
-      musica.play().catch(() => {});
-      if ($("s-intro").classList.contains("active")) fala("ola");
+    if (aud.paused) {
+      aud.volume = 0;
+      const p = aud.play();
+      if (p && p.then) p.then(() => vfade(0.3, 1600)).catch(() => {});
+      else vfade(0.3, 1600);
+      vibe.classList.add("on", "playing");
+      vibe.setAttribute("aria-pressed", "true");
     } else {
-      stopAll();
+      vfade(0, 600, () => aud.pause());
+      vibe.classList.remove("on", "playing");
+      vibe.setAttribute("aria-pressed", "false");
     }
   });
   document.addEventListener("visibilitychange", () => {
-    if (document.hidden) { voz.pause(); musica.pause(); }
-    else if (on) musica.play().catch(() => {});
+    if (document.hidden) { wasOn = !aud.paused; if (wasOn) aud.pause(); }
+    else if (wasOn) { wasOn = false; const p = aud.play(); if (p && p.catch) p.catch(() => {}); }
   });
-  return {
-    // momentos fixos, conteúdo genérico: nada depende da resposta dada
-    comment(qIndex) {
-      if (qIndex === 1 || qIndex === 3) {
-        fala(ambPool[ambNext % ambPool.length]);
-        ambNext++;
-      }
-    },
-    verdict(leader) { setTimeout(() => fala(`fim-${leader}`), 900); },
-    quiet() { voz.pause(); },
-    stop: stopAll,
-  };
 })();
 
 window.addEventListener("load", () => { prepPaths(); introDraw(); });
