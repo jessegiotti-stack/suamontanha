@@ -838,33 +838,66 @@ document.addEventListener("visibilitychange", () => {
   else if (!$("s-intro").classList.contains("active")) neve.start();
 });
 
-/* ---------- vibing: trilha sonora opt-in (padrão da LP) ---------- */
+/* ---------- vibing: trilha sonora opt-in ----------
+   Volume via WebAudio GainNode: o iOS ignora element.volume,
+   então fade e nível baixo só funcionam pelo grafo de áudio. */
 (() => {
   const vibe = $("vibe");
-  const aud = new Audio("audio/musica.mp3");
+  const VOL = 0.3;
+  const aud = new Audio("audio/musica.mp3?v=2");
   aud.loop = true;
   aud.preload = "metadata";
-  let fadeIv = null, wasOn = false;
+  aud.setAttribute("playsinline", "");
+  aud.crossOrigin = "anonymous";
+  let ctx = null, gain = null, wasOn = false, fadeIv = null;
   vibe.classList.add("ready");
-  function vfade(to, ms, then) {
-    clearInterval(fadeIv);
-    const from = aud.volume, t0 = performance.now();
-    fadeIv = setInterval(() => {
-      const k = Math.min(1, (performance.now() - t0) / ms);
-      aud.volume = from + (to - from) * k;
-      if (k >= 1) { clearInterval(fadeIv); if (then) then(); }
-    }, 50);
+
+  function ensureGraph() {
+    if (ctx) return true;
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return false;
+    try {
+      ctx = new AC();
+      const src = ctx.createMediaElementSource(aud);
+      gain = ctx.createGain();
+      gain.gain.value = 0;
+      src.connect(gain);
+      gain.connect(ctx.destination);
+      return true;
+    } catch (e) { ctx = null; gain = null; return false; }
+  }
+  function fade(to, ms, then) {
+    if (gain && ctx) {
+      const now = ctx.currentTime;
+      gain.gain.cancelScheduledValues(now);
+      gain.gain.setValueAtTime(gain.gain.value, now);
+      gain.gain.linearRampToValueAtTime(to, now + ms / 1000);
+      if (then) setTimeout(then, ms);
+    } else {
+      clearInterval(fadeIv);
+      const from = aud.volume, t0 = performance.now();
+      fadeIv = setInterval(() => {
+        const k = Math.min(1, (performance.now() - t0) / ms);
+        aud.volume = from + (to - from) * k;
+        if (k >= 1) { clearInterval(fadeIv); if (then) then(); }
+      }, 50);
+    }
   }
   vibe.addEventListener("click", () => {
     if (aud.paused) {
-      aud.volume = 0;
+      const grafo = ensureGraph();
+      if (ctx && ctx.state === "suspended") ctx.resume();
+      if (!grafo) aud.volume = 0;
       const p = aud.play();
-      if (p && p.then) p.then(() => vfade(0.3, 1600)).catch(() => {});
-      else vfade(0.3, 1600);
+      if (p && p.then) p.then(() => fade(VOL, 1600)).catch(() => {
+        vibe.classList.remove("on", "playing");
+        vibe.setAttribute("aria-pressed", "false");
+      });
+      else fade(VOL, 1600);
       vibe.classList.add("on", "playing");
       vibe.setAttribute("aria-pressed", "true");
     } else {
-      vfade(0, 600, () => aud.pause());
+      fade(0, 500, () => aud.pause());
       vibe.classList.remove("on", "playing");
       vibe.setAttribute("aria-pressed", "false");
     }
