@@ -841,10 +841,16 @@ document.addEventListener("visibilitychange", () => {
 /* ---------- curadoria comentada (voz da Fabi, opt-in) ---------- */
 const curadoria = (() => {
   const vibe = $("vibe");
-  let on = false, current = null;
+  const player = new Audio();
+  player.volume = 0.95;
+  player.preload = "auto";
+  let on = false;
   vibe.classList.add("ready");
+  player.addEventListener("play", () => vibe.classList.add("playing"));
+  player.addEventListener("ended", () => vibe.classList.remove("playing"));
+  player.addEventListener("pause", () => vibe.classList.remove("playing"));
   function stop() {
-    if (current) { current.pause(); current = null; }
+    player.pause();
     vibe.classList.remove("playing");
   }
   vibe.addEventListener("click", () => {
@@ -855,13 +861,10 @@ const curadoria = (() => {
   });
   function play(id) {
     if (!on) return;
-    stop();
-    const a = new Audio(`audio/${id}.mp3`);
-    a.volume = 0.95;
-    current = a;
-    a.addEventListener("play", () => vibe.classList.add("playing"));
-    a.addEventListener("ended", () => { if (current === a) { current = null; vibe.classList.remove("playing"); } });
-    a.play().catch(() => { vibe.classList.remove("playing"); });
+    player.pause();
+    player.src = `audio/${id}.mp3`;
+    player.currentTime = 0;
+    player.play().catch(() => vibe.classList.remove("playing"));
   }
   document.addEventListener("visibilitychange", () => { if (document.hidden) stop(); });
   return {
