@@ -723,7 +723,6 @@ function pick(btn, w) {
   const box = $("opts");
   box.classList.add("locked");
   btn.classList.add("picked");
-  curadoria.comment(state.i);
   state.score[w]++;
   state.picks.push(w);
   state.leader = computeLeader();
@@ -746,10 +745,8 @@ function showResult() {
   $("cta-wa").href = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(m.wa)}`;
   showMountain(state.leader, 5);
   go("s-result");
-  curadoria.verdict(state.leader);
 }
 function restart() {
-  curadoria.quiet();
   state.i = 0; state.score = { v: 0, c: 0, z: 0, r: 0, s: 0 }; state.picks = []; state.leader = "z";
   document.querySelectorAll(".mountain").forEach((m) => { m.classList.remove("active"); resetLayers(m.id); });
   renderQuestion();
